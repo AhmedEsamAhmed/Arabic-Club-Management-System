@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+functions/node_modules/
+
+# Build output
+dist/
+.firebase/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Firebase emulator data
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+storage-debug.log

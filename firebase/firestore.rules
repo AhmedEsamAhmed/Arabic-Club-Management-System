@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isLeader() {
+      return isSignedIn() && getUserData().userType == 'leader';
+    }
+
+    function isApprovedMedia() {
+      return isSignedIn()
+        && getUserData().userType == 'media'
+        && getUserData().approved == true;
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if request.auth.uid == uid;
+      allow update: if isLeader() || request.auth.uid == uid;
+      allow delete: if isLeader();
+    }
+
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isLeader();
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isLeader();
+      allow update: if isLeader()
+        || (isApprovedMedia() && request.auth.uid == resource.data.assignedTo);
+    }
+
+    match /notifications/{notifId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.uid;
+      allow create: if isLeader();
+      allow update: if isSignedIn() && request.auth.uid == resource.data.uid;
+      allow delete: if isLeader()
+        || (isSignedIn() && request.auth.uid == resource.data.uid);
+    }
+
+    match /pointsLedger/{ledgerId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Cloud Functions only
+    }
+
+    match /availability/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+  }
+}
